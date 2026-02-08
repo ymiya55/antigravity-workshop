@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inverse Invader - Alien Domination</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="ui-layer">
+            <div id="top-ui">
+                <div class="stat-box" id="player-stat">
+                    LABEL: MOTHERSHIP<br>
+                    LIFE: <span id="player-life">10</span>
+                </div>
+                <div class="stat-box" id="minion-stat">
+                    MINIONS: <span id="minion-active">0</span><br>
+                    STOCK: <span id="minion-stock">0</span> <span id="stock-ready" style="display:none;">[READY]</span>
+                </div>
+                <div class="stat-box" id="score-stat">
+                    SCORE: <span id="score">0</span>
+                </div>
+            </div>
+
+            <div id="bottom-ui">
+                <div class="stat-box" id="enemy-stat">
+                    FIGHTER LIFE: <span id="fighter-life">3</span><br>
+                    BUNKERS: <span id="bunker-life">4</span>
+                </div>
+            </div>
+
+            <div id="cooldown-bar-container">
+                <div id="cooldown-bar"></div>
+            </div>
+
+            <div id="start-screen" class="screen active">
+                <h1>INVERSE INVADER</h1>
+                <p class="subtitle">TACTICAL EXTERMINATION</p>
+                <p class="instruction">人類を排除せよ</p>
+                <p class="controls">
+                    MOVE: [←][→] / ATTACK: [SPACE]<br>
+                    DEPLOY MINIONS: [Z] or [SHIFT]
+                </p>
+                <button id="start-btn">INVASION START</button>
+            </div>
+
+            <div id="game-over-screen" class="screen">
+                <h1 id="result-title">MISSION FAILED</h1>
+                <p>FINAL SCORE: <span id="final-score">0</span></p>
+                <p id="result-reason"></p>
+                <button id="restart-btn">RETRY</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

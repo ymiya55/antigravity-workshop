@@ -1,0 +1,211 @@
+:root {
+    --primary-color: #0f0;
+    /* Alien Green */
+    --secondary-color: #b0f;
+    /* Plasma Purple */
+    --accent-color: #f00;
+    /* Danger Red */
+    --bg-color: #050510;
+    /* Deep Space */
+    --ui-bg: rgba(0, 20, 0, 0.7);
+    --font-main: 'Rajdhani', sans-serif;
+    --font-pixel: 'Press Start 2P', cursive;
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-color);
+    font-family: var(--font-main);
+    color: white;
+}
+
+#game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, #101020 0%, #000 100%);
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 50px rgba(0, 255, 0, 0.1);
+    border: 2px solid #222;
+    box-sizing: border-box;
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#top-ui,
+#bottom-ui {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.stat-box {
+    background: var(--ui-bg);
+    padding: 10px 20px;
+    border: 1px solid var(--primary-color);
+    border-radius: 5px;
+    font-family: var(--font-pixel);
+    font-size: 12px;
+    line-height: 1.6;
+    color: #fff;
+    text-shadow: 0 0 5px var(--primary-color);
+    min-width: 150px;
+}
+
+#player-stat {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+#minion-stat {
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+    text-shadow: 0 0 5px var(--secondary-color);
+}
+
+#enemy-stat {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    text-shadow: 0 0 5px var(--accent-color);
+}
+
+#cooldown-bar-container {
+    position: absolute;
+    top: 80px;
+    /* Below Mothership */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#cooldown-bar {
+    width: 100%;
+    height: 100%;
+    background: var(--primary-color);
+    transform-origin: left;
+    transform: scaleX(1);
+    transition: transform 0.1s linear;
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    z-index: 10;
+}
+
+.screen.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+h1 {
+    font-family: var(--font-pixel);
+    font-size: 48px;
+    margin: 0 0 20px 0;
+    color: var(--primary-color);
+    text-shadow: 0 0 20px var(--primary-color), 2px 2px 0px #fff;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.subtitle {
+    font-size: 24px;
+    letter-spacing: 5px;
+    color: var(--secondary-color);
+    margin-bottom: 40px;
+    text-shadow: 0 0 10px var(--secondary-color);
+}
+
+.instruction,
+.controls {
+    font-size: 18px;
+    margin: 10px 0;
+    opacity: 0.8;
+    text-align: center;
+    line-height: 1.6;
+}
+
+button {
+    margin-top: 40px;
+    padding: 15px 40px;
+    font-family: var(--font-pixel);
+    font-size: 16px;
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+button:hover {
+    background: var(--primary-color);
+    color: #000;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.8);
+    transform: scale(1.05);
+}
+
+#game-over-screen h1 {
+    color: var(--accent-color);
+    text-shadow: 0 0 20px var(--accent-color);
+}
+
+#stock-ready {
+    color: yellow;
+    animation: blink 0.5s infinite alternate;
+}
+
+@keyframes blink {
+    from {
+        opacity: 0.5;
+    }
+
+    to {
+        opacity: 1;
+        text-shadow: 0 0 10px yellow;
+    }
+}

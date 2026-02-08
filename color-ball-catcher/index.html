@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Ball Catcher</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            font-family: 'Inter', sans-serif;
+            color: white;
+            user-select: none;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            max-width: 600px;
+            margin: 0 auto;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            font-size: 24px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .hud-left,
+        .hud-right {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .score-value {
+            font-weight: bold;
+            font-size: 32px;
+            color: #4cc9f0;
+        }
+
+        .combo-value {
+            font-weight: bold;
+            font-size: 32px;
+            color: #f72585;
+            transition: transform 0.1s;
+        }
+
+        .combo-container {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .combo-active {
+            opacity: 1;
+        }
+
+        .lost-value {
+            font-weight: bold;
+            font-size: 32px;
+            color: #ff4d4d;
+        }
+
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        #game-over-screen.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #f72585, #7209b7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            font-size: 24px;
+            margin-bottom: 40px;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: linear-gradient(45deg, #4cc9f0, #4895ef);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(76, 201, 240, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            pointer-events: auto;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 201, 240, 0.6);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        /* Instructions */
+        #instructions {
+            position: absolute;
+            bottom: 100px;
+            width: 100%;
+            text-align: center;
+            font-size: 18px;
+            opacity: 0.7;
+            animation: fetch 2s infinite alternate;
+            z-index: 2;
+            /* Ensure instructions are above canvas */
+        }
+
+        @keyframes fetch {
+            from {
+                opacity: 0.5;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(-5px);
+            }
+        }
+
+        #combo-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 80px;
+            font-weight: bold;
+            color: #ffbe0b;
+            text-shadow: 0 0 20px rgba(255, 190, 11, 0.8);
+            pointer-events: none;
+            opacity: 0;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s;
+            z-index: 20;
+            white-space: nowrap;
+        }
+
+        #combo-popup.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="ui-layer">
+            <div class="hud">
+                <div class="hud-left">
+                    <div>SCORE: <span id="score" class="score-value">0</span></div>
+                    <!-- <div id="combo-container" class="combo-container">COMBO: <span id="combo" class="combo-value">0</span></div> -->
+                </div>
+                <div class="hud-right">
+                    <div>LOST: <span id="lost" class="lost-value">0</span> / 5</div>
+                </div>
+            </div>
+            <div id="instructions">
+                Use Arrow Keys or A/D to Move
+            </div>
+            <div id="combo-popup">COMBO x3</div>
+        </div>
+
+        <div id="game-over-screen">
+            <h1>GAME OVER</h1>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button id="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        // const comboEl = document.getElementById('combo');
+        // const comboContainer = document.getElementById('combo-container');
+        const lostEl = document.getElementById('lost');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreEl = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+        const instructions = document.getElementById('instructions');
+        const comboPopup = document.getElementById('combo-popup');
+
+        // Game Constants
+        const BALL_COLORS = ['#ff006e', '#3a86ff', '#8338ec', '#ffbe0b']; // Pink, Blue, Purple, Yellow
+        const BASKET_WIDTH = 100;
+        const BASKET_HEIGHT = 20;
+        const PLAYER_SPEED = 8;
+        const GRAVITY = 0.05; // Not used for simplified falling, but good for physics
+
+        // Game State
+        let game = {
+            active: false,
+            score: 0,
+            combo: 0,
+            lost: 0,
+            balls: [],
+            particles: [],
+            lastTime: 0,
+            spawnTimer: 0,
+            spawnInterval: 1000,
+            shake: 0,
+            basket: {
+                x: 0,
+                y: 0,
+                width: BASKET_WIDTH,
+                height: BASKET_HEIGHT,
+                color: '#ffffff',
+                targetX: 0
+            },
+            keys: {
+                left: false,
+                right: false
+            }
+        };
+
+        function resize() {
+            const container = document.getElementById('game-container');
+            // Ensure container takes full height but respects max-width
+            // Canvas should match container width
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+
+            game.basket.y = canvas.height - 50;
+            if (!game.active && game.balls.length === 0) {
+                game.basket.x = canvas.width / 2 - BASKET_WIDTH / 2;
+                game.basket.targetX = game.basket.x;
+            }
+        }
+        window.addEventListener('resize', resize);
+
+        class Ball {
+            constructor() {
+                this.type = Math.random() < 0.10 ? 'heart' : 'ball'; // 10% chance for heart
+                if (this.type === 'heart') {
+                    this.radius = 20;
+                    this.color = '#ff0000';
+                } else {
+                    this.radius = 15;
+                    this.color = BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)];
+                }
+                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
+                this.y = -this.radius;
+                this.speed = 3 + (game.score / 500);
+                this.markedForDeletion = false;
+            }
+
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height + this.radius) {
+                    this.markedForDeletion = true;
+                    if (this.type !== 'heart') {
+                        handleLostBall();
+                    }
+                }
+            }
+
+            draw(ctx) {
+                if (this.type === 'heart') {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#ff0000';
+
+                    // Draw Heart
+                    ctx.beginPath();
+                    let topCurveHeight = this.radius * 0.3;
+                    ctx.moveTo(0, topCurveHeight);
+                    ctx.bezierCurveTo(0, 0, -this.radius, 0, -this.radius, topCurveHeight);
+                    ctx.bezierCurveTo(-this.radius, (this.radius + topCurveHeight) / 2, 0, (this.radius + topCurveHeight) / 2 + this.radius, 0, this.radius * 2);
+                    ctx.bezierCurveTo(0, (this.radius + topCurveHeight) / 2 + this.radius, this.radius, (this.radius + topCurveHeight) / 2, this.radius, topCurveHeight);
+                    ctx.bezierCurveTo(this.radius, 0, 0, 0, 0, topCurveHeight);
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = this.color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.closePath();
+
+                    // Shine effect
+                    ctx.beginPath();
+                    ctx.arc(this.x - 5, this.y - 5, this.radius / 3, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.radius = Math.random() * 3 + 2;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = (Math.random() - 0.5) * 10;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.02 + 0.02;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+                this.radius *= 0.95;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function initGame() {
+            game.active = true;
+            game.score = 0;
+            game.combo = 0;
+            game.lost = 0;
+            game.balls = [];
+            game.particles = [];
+            game.spawnInterval = 1000;
+            game.shake = 0;
+
+            game.flashColor = null;
+            game.flashTimer = 0;
+            game.basket.x = canvas.width / 2 - BASKET_WIDTH / 2;
+            game.basket.targetX = game.basket.x;
+            game.lastBallColor = null;
+
+            scoreEl.innerText = '0';
+            // comboEl.innerText = '0';
+            lostEl.innerText = '0';
+            // comboContainer.classList.remove('combo-active');
+            comboPopup.classList.remove('active');
+            gameOverScreen.classList.remove('visible');
+            instructions.style.display = 'block';
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleLostBall() {
+            game.lost++;
+            lostEl.innerText = game.lost;
+
+            // Shake effect for losing a ball
+            game.shake = 5;
+
+            if (game.lost >= 5) {
+                endGame();
+            }
+        }
+
+        function handleCatch(ball) {
+            if (ball.type === 'heart') {
+                if (game.lost > 0) {
+                    game.lost--;
+                    lostEl.innerText = game.lost;
+                }
+                // No reaction for heart catch as requested
+                return;
+            }
+
+            // Check combo
+            if (game.lastBallColor === ball.color) {
+                game.combo++;
+            } else {
+                game.combo = 1;
+            }
+            game.lastBallColor = ball.color;
+
+            // Score calculation
+            let points = 10 * game.combo;
+            game.score += points;
+            scoreEl.innerText = game.score;
+
+            createExplosion(ball.x, ball.y, ball.color, game.combo >= 3);
+
+            // High combo reward (shake & popup)
+            if (game.combo >= 3) {
+                game.shake = Math.min(game.combo * 2, 20);
+                // Enhanced combo flash
+                game.flashColor = ball.color;
+                game.flashTimer = 10;
+
+                // Show Popup
+                showComboPopup(game.combo);
+            }
+        }
+
+        function showComboPopup(count) {
+            comboPopup.innerText = `COMBO x${count}!`;
+            comboPopup.style.color = BALL_COLORS[count % BALL_COLORS.length];
+            comboPopup.classList.add('active');
+
+            // Re-trigger animation
+            comboPopup.style.transform = 'translate(-50%, -50%) scale(1.5)';
+            setTimeout(() => {
+                comboPopup.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 100);
+
+            // Hide after 1s
+            if (game.comboTimeout) clearTimeout(game.comboTimeout);
+            game.comboTimeout = setTimeout(() => {
+                comboPopup.classList.remove('active');
+            }, 1000);
+        }
+
+        function createExplosion(x, y, color, isBig) {
+            let count = isBig ? 30 : 10;
+            for (let i = 0; i < count; i++) {
+                game.particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function endGame() {
+            game.active = false;
+            finalScoreEl.innerText = game.score;
+            gameOverScreen.classList.add('visible');
+            instructions.style.display = 'none';
+        }
+
+        function update(dt) {
+            if (!game.active) return;
+
+            // Spawn balls
+            game.spawnTimer += dt;
+            if (game.spawnTimer > game.spawnInterval) {
+                game.balls.push(new Ball());
+                game.spawnTimer = 0;
+                // Decrease interval slightly as score increases, min 400ms
+                game.spawnInterval = Math.max(400, 1000 - game.score / 10);
+            }
+
+            // Move basket
+            if (game.keys.left) {
+                game.basket.x -= PLAYER_SPEED;
+            }
+            if (game.keys.right) {
+                game.basket.x += PLAYER_SPEED;
+            }
+            // Clamp basket
+            if (game.basket.x < 0) game.basket.x = 0;
+            if (game.basket.x > canvas.width - game.basket.width) game.basket.x = canvas.width - game.basket.width;
+
+            // Update balls
+            game.balls.forEach(ball => ball.update());
+
+            // Collision detection
+            game.balls.forEach(ball => {
+                if (!ball.markedForDeletion) {
+                    // Simple AABB collision + Circle
+                    // Closest point on rectangle to circle center
+                    let testX = ball.x;
+                    let testY = ball.y;
+
+                    if (ball.x < game.basket.x) testX = game.basket.x;
+                    else if (ball.x > game.basket.x + game.basket.width) testX = game.basket.x + game.basket.width;
+
+                    if (ball.y < game.basket.y) testY = game.basket.y;
+                    else if (ball.y > game.basket.y + game.basket.height) testY = game.basket.y + game.basket.height;
+
+                    let distX = ball.x - testX;
+                    let distY = ball.y - testY;
+                    let distance = Math.sqrt((distX * distX) + (distY * distY));
+
+                    if (distance <= ball.radius) {
+                        ball.markedForDeletion = true;
+                        handleCatch(ball);
+                    }
+                }
+            });
+
+            // Remove balls
+            game.balls = game.balls.filter(b => !b.markedForDeletion);
+
+            // Update particles
+            game.particles.forEach(p => p.update());
+            game.particles = game.particles.filter(p => p.life > 0);
+
+            // Update shake
+            if (game.shake > 0) {
+                game.shake *= 0.9;
+                if (game.shake < 0.5) game.shake = 0;
+            }
+
+            // Update flash
+            if (game.flashTimer > 0) {
+                game.flashTimer--;
+                if (game.flashTimer <= 0) game.flashColor = null;
+            }
+        }
+
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(26, 26, 46, 0.4)'; // Trail effect
+            ctx.fillRect(0, 0, canvas.width, canvas.height); // Clear screen
+
+            ctx.save();
+
+            // Screen shake
+            if (game.shake > 0) {
+                let dx = (Math.random() - 0.5) * game.shake;
+                let dy = (Math.random() - 0.5) * game.shake;
+                ctx.translate(dx, dy);
+            }
+
+            // Screen Flash
+            if (game.flashTimer > 0 && game.flashColor) {
+                ctx.fillStyle = game.flashColor;
+                ctx.globalAlpha = 0.3;
+                ctx.fillRect(-game.shake, -game.shake, canvas.width + game.shake * 2, canvas.height + game.shake * 2);
+                ctx.globalAlpha = 1.0;
+            }
+
+            // Draw Basket
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#4cc9f0';
+            ctx.fillStyle = game.basket.color;
+            ctx.beginPath();
+            ctx.roundRect(game.basket.x, game.basket.y, game.basket.width, game.basket.height, 10);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Draw Balls
+            game.balls.forEach(ball => ball.draw(ctx));
+
+            // Draw Particles
+            game.particles.forEach(p => p.draw(ctx));
+
+            ctx.restore();
+
+            if (game.active) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            let dt = timestamp - lastTime;
+            lastTime = timestamp;
+            update(dt);
+            draw();
+        }
+
+        // Input Handling
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') game.keys.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') game.keys.right = true;
+            if (instructions.style.display !== 'none') instructions.style.display = 'none';
+        });
+
+        window.addEventListener('keyup', e => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') game.keys.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') game.keys.right = false;
+        });
+
+        canvas.addEventListener('mousemove', e => {
+            if (game.active) {
+                // Adjust mouse position relative to canvas
+                const rect = canvas.getBoundingClientRect();
+                game.basket.x = (e.clientX - rect.left) - game.basket.width / 2;
+                if (instructions.style.display !== 'none') instructions.style.display = 'none';
+            }
+        });
+
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if (game.active && e.touches.length > 0) {
+                const rect = canvas.getBoundingClientRect();
+                game.basket.x = (e.touches[0].clientX - rect.left) - game.basket.width / 2;
+                if (instructions.style.display !== 'none') instructions.style.display = 'none';
+            }
+        }, { passive: false });
+
+        restartBtn.addEventListener('click', initGame);
+
+        // Start
+        resize();
+        initGame();
+
+    </script>
+</body>
+
+</html>
